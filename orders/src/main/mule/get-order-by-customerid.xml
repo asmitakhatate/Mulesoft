@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+	<flow name="get-order-by-customeridFlow" doc:id="4eeb1143-7d9b-4c17-a643-1e6d97c45b8b" >
+		<http:listener doc:name="Listener" doc:id="5cb316cc-7e75-4d22-826e-f49862c1152b" config-ref="HTTP_Listener_config" path="get-order/{customerid}">
+			<http:response statusCode="#[vars.statusCode]" reasonPhrase="#[vars.reason]" />
+		</http:listener>
+		<ee:transform doc:name="Transform Message" doc:id="3099b42d-ca1a-46df-b29c-b9ce191ce6fe" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="correlationId" ><![CDATA[%dw 2.0
+output application/java
+---
+attributes.headers.'correlation-id']]></ee:set-variable>
+				<ee:set-variable variableName="transactionId" ><![CDATA[%dw 2.0
+output application/java
+---
+attributes.headers.'x-transaction-id']]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="b7aeb57f-b110-41c8-b814-b1229390932b" message="transactionid : #[vars.transactionId] correlationid : #[vars.correlationId] message : #[payload] execution started"/>
+		<set-variable value="#[attributes.uriParams.customerid]" doc:name="Set Variable" doc:id="49203ef6-077c-4c4e-9ef8-d495579a5c53" variableName="customerId"/>
+		<db:select doc:name="Select" doc:id="45265d73-5c42-4e72-a9ca-cf5ccca55f44" config-ref="Database_Config">
+			<db:sql ><![CDATA[select employeeid from orders where customerid=:customerid]]></db:sql>
+			<db:input-parameters ><![CDATA[#[customerid:vars.customerId]]]></db:input-parameters>
+		</db:select>
+		<choice doc:name="Choice" doc:id="dc8b04e9-13e0-4ab6-a54b-eb3561c3b867" >
+			<when expression="#[sizeOf(payload)&gt;0]">
+				<ee:transform doc:name="success" doc:id="278fe3cf-b25b-4712-be7a-e5c7f9702862" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	Employeeid:payload.EMPLOYEEID
+}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="statusCode" ><![CDATA[200]]></ee:set-variable>
+						<ee:set-variable variableName="reason" ><![CDATA['OK']]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="error" doc:id="be43f36c-e7e0-4ac5-b00f-2982035465eb" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message:"CustomerId Doesn't exists",
+	code:"404"
+}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="statusCode" ><![CDATA[404]]></ee:set-variable>
+						<ee:set-variable variableName="reason" ><![CDATA['Not Found']]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</otherwise>
+		</choice>
+		<logger level="INFO" doc:name="Logger" doc:id="ed9e5cc2-268b-4da3-a5ef-75e9e96fa3f6" message="transactionid : #[vars.transactionId] correlationid : #[vars.correlationId] message : #[payload] execution ended"/>
+	</flow>
+</mule>

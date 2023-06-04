@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+	<flow name="Update-OrdersFlow" doc:id="f44b1f19-ef2b-4b83-89d7-ff0bbe41cac7" >
+		<http:listener doc:name="Listener" doc:id="dac7f614-032a-44f9-9089-10cf55b5699c" config-ref="HTTP_Listener_config1" path="update"/>
+		<ee:transform doc:name="Transform Message" doc:id="d2fcabf6-e9c1-49cf-becf-8a99217fe56a" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="transactionId" ><![CDATA[%dw 2.0
+output application/java
+---
+	attributes.headers.'x-transaction-id' default uuid()]]></ee:set-variable>
+				<ee:set-variable variableName="correlationId" ><![CDATA[%dw 2.0
+output application/java
+---
+ attributes.headers.'correlationId']]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="ac904315-19f5-4805-97e7-2134047a5e17" message="transactionID : #[vars.transactionId] correlationID: #[vars.correlationId] message:#[payload] execution started"/>
+		<ee:transform doc:name="Transform Message" doc:id="7e4b790c-b18d-40c4-80f1-05046d2e655a" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="updateOrderPayload" ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	customerid: payload.CustomerID,
+	employeeid: payload.EmployeeID
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<db:update doc:name="Update" doc:id="0a3070ca-0f11-4a07-b8de-41f3d9d17115" config-ref="Database_Config1">
+			<db:sql ><![CDATA[update orders set customerid=:customerid where employeeid=:employeeid]]></db:sql>
+			<db:input-parameters ><![CDATA[#[vars.updateOrderPayload]]]></db:input-parameters>
+		</db:update>
+		<ee:transform doc:name="Transform Message" doc:id="47570006-aae1-4b31-b75d-a7af877c365a" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+
+	if(payload.affectedRows >0){
+		employeeID: vars.updateOrderPayload.employeeid
+	}
+else{}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="9f352776-154a-467a-a599-75336159fa21" message="transactionID : #[vars.transactionId] correlationID: #[vars.correlationId] message:#[payload] end logger"/>
+	</flow>
+</mule>

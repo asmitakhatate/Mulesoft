@@ -1,0 +1,85 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<types:mule xmlns:types="http://www.mulesoft.org/schema/mule/types">
+  <types:catalog>
+    <types:type name="employee" format="json">
+      <types:shape format="weave" example="examples/emp-data.json.txt"><![CDATA[%dw 2.0
+
+type employee = {| EmpName: String |} {"example": "{\\\"EmpName\\\":\\\"asmita\\\"}"}
+
+]]></types:shape>
+    </types:type>
+    <types:type name="empOutput" format="json">
+      <types:shape format="weave" example="examples/emp-data-output.json.txt"><![CDATA[%dw 2.0
+
+type empOutput = {| EmpId: String |} {"example": "{\\\"EmpId\\\":\\\"7\\\"}"}
+
+]]></types:shape>
+    </types:type>
+    <types:type name="OrderInput" format="json">
+      <types:shape format="weave" example="examples/InsertOrder-Input-1.json"><![CDATA[%dw 2.0
+
+type OrderInput = {|
+  CustomerID: String, 
+  OrderDate: String
+|} {"example": "{\\\"CustomerID\\\":\\\"Asmita\\\",\\\"OrderDate\\\":\\\"12-11-2222\\\"}"}
+
+]]></types:shape>
+    </types:type>
+    <types:type name="OrderOutput" format="json">
+      <types:shape format="weave" example="examples/InsertOrder-Output.json.txt"><![CDATA[%dw 2.0
+
+type OrderOutput = {|
+  CustomerID: String, 
+  OrderDate: String
+|} {"example": "{\\\"CustomerID\\\":\\\"GREAL\\\",\\\"OrderDate\\\":\\\"02-08-2021\\\"}"}
+
+]]></types:shape>
+    </types:type>
+    <types:type name="OrderUpdate-Input" format="json">
+      <types:shape format="weave" example="examples/UpdateOrder.json.txt"><![CDATA[%dw 2.0
+
+type OrderUpdate_Input = {|
+  EmployeeID: String, 
+  CustomerID: String
+|} {"example": "{\\\"EmployeeID\\\":\\\"6\\\",\\\"CustomerID\\\":\\\"GREAL\\\"}"}
+
+]]></types:shape>
+    </types:type>
+  </types:catalog>
+  <types:enrichment select="#5347e96e-3718-482b-9350-2a76a15dba84">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="employee"/>
+        </types:message>
+      </types:input-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#44dae6f5-9324-4a1c-9008-fc122e25698a">
+    <types:processor-declaration>
+      <types:output-event>
+        <types:message>
+          <types:payload type="empOutput"/>
+        </types:message>
+      </types:output-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#9d685076-56c6-4ae0-b17e-fdd0e272914f">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="OrderInput"/>
+        </types:message>
+      </types:input-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#7e4b790c-b18d-40c4-80f1-05046d2e655a">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="OrderUpdate-Input"/>
+        </types:message>
+      </types:input-event>
+    </types:processor-declaration>
+  </types:enrichment>
+</types:mule>

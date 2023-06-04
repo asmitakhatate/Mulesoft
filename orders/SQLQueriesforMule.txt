@@ -1,0 +1,49 @@
+//create sequence 
+CREATE SEQUENCE "EMP_SEQ" MINVALUE 1 MAXVALUE 9999999 INCREMENT BY 1 START WITH 1 CACHE 20 NOORDER NOCYCLE;
+
+//create table with primary key and auto-increment it 
+CREATE TABLE "EMP_DETAIL"(
+	EMP_ID NUMBER(20,0) NOT NULL ENABLE,
+	EMP_NAME VARCHAR2(30),
+	JOINING_DATE date,
+	CONSTRAINT "EMP_ID_PK" PRIMARY KEY ("EMP_ID")
+);
+
+//To Create trigger
+CREATE OR REPLACE TRIGGER "EMP_DETAIL_TR"
+	BEFORE INSERT ON "EMP_DETAIL"
+	FOR EACH ROW
+BEGIN
+	SELECT EMP_SEQ.NEXTVAL
+	INTO :new.EMP_ID
+	FROM dual;
+END;
+
+ALTER TRIGGER "EMP_DETAIL_TR" ENABLE;
+
+SELECT * FROM EMP_DETAIL;
+
+INSERT INTO EMP_DETAIL(EMP_NAME,JOINING_DATE) values ('asmita','02-08-2021');
+
+SELECT MAX(EMP_ID) AS EMPID FROM EMP_DETAIL WHERE emp_name='asmita';
+
+//To change the default date format of oracle which is 'dd-MM-yy'
+ALTER SESSION SET NLS_DATE_FORMAT='DD-MM-YYYY';
+
+
+//stored procedure to insert 
+CREATE OR replace PROCEDURE insert_orders (in_customerId IN VARCHAR2,
+			in_orderDate IN VARCHAR2,
+			out_emp_id OUT NUMBER) 
+AS 
+BEGIN 
+    INSERT INTO orders 
+                (customerid,orderdate) 
+    VALUES     (in_customerId,TO_DATE(in_orderDate,'dd-MM-yyyy')) 
+    returning EMPLOYEEID INTO out_emp_id; 
+END insert_orders;
+
+variable empId Number;
+call insert_orders('poornima', '12-12-2012',:empId);
+
+print variable empId;

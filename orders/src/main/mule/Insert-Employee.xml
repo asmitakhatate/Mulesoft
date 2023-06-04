@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config_Employee" doc:name="HTTP Listener config" doc:id="1a8345d7-f197-49fd-bbd6-4ce1c0a6d92c" basePath="employee" >
+		<http:listener-connection host="0.0.0.0" port="8091" />
+	</http:listener-config>
+	<flow name="Insert-EmployeeFlow" doc:id="fc307bb9-4f0f-4625-8b8e-9223574d2b2b" >
+		<http:listener doc:name="Listener" doc:id="8db7b526-b69e-4968-babd-b5f7a4f0d392" config-ref="HTTP_Listener_config_Employee" path="insert">
+			<http:response statusCode="#[vars.statusCode]" reasonPhrase="#[vars.Reason]"/>
+		</http:listener>
+		<logger level="INFO" doc:name="Logger" doc:id="d36849f3-968f-424c-8d7c-bbfa61faf6e7" message="logging for insert into employee details"/>
+		<ee:transform doc:name="Transform Message" doc:id="5347e96e-3718-482b-9350-2a76a15dba84" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	EMP_NAME: payload.EmpName,
+	JOINING_DATE: now() as String {format:"dd-MM-yyyy"}
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="EmployeePayload" ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	EMP_NAME: payload.EmpName,
+	JOINING_DATE: now() as String {format:"dd-MM-yyyy"}
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<db:insert doc:name="Insert into employee" doc:id="bc0c0325-579b-419c-bdb6-4593c74dc721" config-ref="Database_Config" autoGenerateKeys="true">
+			<db:sql ><![CDATA[INSERT INTO EMP_DETAIL(EMP_NAME,JOINING_DATE) values (:EMP_NAME,:JOINING_DATE)]]></db:sql>
+			<db:input-parameters ><![CDATA[#[vars.EmployeePayload]]]></db:input-parameters>
+			<db:auto-generated-keys-column-names >
+				<db:auto-generated-keys-column-name value="EMP_ID" />
+			</db:auto-generated-keys-column-names>
+		</db:insert>
+		<ee:transform doc:name="Transform Message" doc:id="44dae6f5-9324-4a1c-9008-fc122e25698a" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"EMP_ID" : payload[0].EMP_ID
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="statusCode" ><![CDATA[201]]></ee:set-variable>
+				<ee:set-variable variableName="Reason" ><![CDATA["OK"]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="5e21dc9c-f245-4824-ab14-274b62071353" message="End logger for insert into employee"/>
+	</flow>
+	<flow name="Insert-EmployeeFlow1" doc:id="a49804cf-dbd2-44e8-94eb-a2580750d37a" >
+		<http:listener doc:name="Listener" doc:id="88ac3f91-8fc8-4fc3-bc9a-00f3e992f440" config-ref="HTTP_Listener_config_Employee" path="demo"/>
+		<db:select doc:name="Select" doc:id="9353a7ea-80c5-4a50-a502-00ec2b96646f" config-ref="Database_Config">
+			<db:sql><![CDATA[SELECT MAX(EMP_ID) AS EMPID FROM EMP_DETAIL WHERE EMP_NAME=:EMP_NAME]]></db:sql>
+			<db:input-parameters><![CDATA[#[{
+	EMP_NAME:vars.EmployeePayload.EMP_NAME
+}]]]></db:input-parameters>
+		</db:select>
+	</flow>
+</mule>

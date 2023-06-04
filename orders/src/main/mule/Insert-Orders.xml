@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="0e5964d1-1a46-4164-8000-7a43bfcf56a8" basePath="order" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="a8a48c51-afc0-4dc9-b569-eec463fffa15" >
+		<db:oracle-connection host="localhost" user="system" password="tiger" instance="xe"/>
+	</db:config>
+	<flow name="insert-studentFlow" doc:id="32decbf0-088f-4b2d-b176-83653439045a" >
+		<http:listener doc:name="Listener" doc:id="cba44e35-f071-418d-a8a6-74de06a73038" config-ref="HTTP_Listener_config" path="insert-order" allowedMethods="POST" >
+			<http:response statusCode="200" reasonPhrase="Data Inserted" />
+		</http:listener>
+		<logger level="INFO" doc:name="start Logger" doc:id="c083fb17-2550-4b7b-b7cd-1df12226bd26" message="start logger for insert into student" />
+		<ee:transform doc:name="Transform Message" doc:id="9d685076-56c6-4ae0-b17e-fdd0e272914f" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="orderPayload" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	CustomerID: payload.CustomerID,
+	OrderDate: payload.OrderDate as String {
+		format:"yyyy-MM-dd"}
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<db:insert doc:name="Insert into Orders" doc:id="88911311-6f91-44c0-89ff-df2d98bc03a8" config-ref="Database_Config" autoGenerateKeys="true">
+			<db:sql ><![CDATA[insert into orders(customerid,OrderDate) values(:CustomerID,TO_DATE(:OrderDate,'dd-MM-yyyy'))]]></db:sql>
+			<db:input-parameters ><![CDATA[#[vars.orderPayload]]]></db:input-parameters>
+			<db:auto-generated-keys-column-names >
+				<db:auto-generated-keys-column-name value="EMPLOYEEID" />
+			</db:auto-generated-keys-column-names>
+		</db:insert>
+		<ee:transform doc:name="Transform Message" doc:id="1a955ce0-2a0b-4746-b101-88784d6072e2" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	status:200,
+	message:"success",
+	EmpID:payload[0].EMPLOYEEID
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="end Logger" doc:id="b2b7cc78-3f7d-48ca-b03b-c667a2306037" message="end logger for insert into student" />
+	</flow>
+</mule>

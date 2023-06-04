@@ -1,0 +1,26 @@
+{
+  "Orders": {
+    "Order": [
+      {
+        "CustomerID": "GREAL",
+        "EmployeeID": 6,
+        "OrderDate": "1997-05-06T00:00:00"
+      },
+      {
+        "CustomerID": "GREAL",
+        "EmployeeID": 8,
+        "OrderDate": "1997-07-04T00:00:00"
+      },
+      {
+        "CustomerID": "GREAL",
+        "EmployeeID": 1,
+        "OrderDate": "1997-07-31T00:00:00"
+      },
+      {
+        "CustomerID": "GREAL",
+        "EmployeeID": 4,
+        "OrderDate": "1997-07-31T00:00:00"
+      }
+    ]
+  }
+}
