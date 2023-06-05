@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:validation="http://www.mulesoft.org/schema/mule/validation" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd">
+	<sub-flow name="subFlow" doc:id="1511e79f-e608-49d2-954f-2abeab0a5e58" >
+		<validation:all doc:name="All" doc:id="b693ccbb-0bb3-43b7-b586-69ddb175f2a2">
+			<validation:is-not-null doc:name="Is not null" doc:id="c20e9897-3beb-46c7-92fa-cf1488ff9d45" value="#[vars.payloadVar.CustomerID]" message="CustomerID Invalid" />
+			<validation:matches-regex doc:name="Matches regex" doc:id="2cedd95b-ffa8-4027-8cda-14eeb3ab375f" value="#[vars.payloadVar.OrderDate]" regex="([12]\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01]))" message="Invalid Date" />
+			<validation:is-number numberType="INTEGER" doc:name="Is number" doc:id="e22e226a-86c4-4c42-8f06-e14ca970322f" value="#[vars.payloadVar.EmployeeID]" message="Invalid Employee ID" />
+			<validation:is-email doc:name="Is email" doc:id="df4ec88d-821f-433e-b1d0-0e35a3fd0c2f" email="#[vars.payloadVar.Email]" message="Invalid Email" />
+		</validation:all>
+	</sub-flow>
+</mule>
